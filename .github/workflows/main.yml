@@ -39,8 +39,14 @@ jobs:
         cd /etc/AIAPI
         sudo pip3 install -r requirement.txt
 
-        # Run the application
-        sudo python3 Prediction.py
+        # Stop the existing service (if running)
+        sudo systemctl stop my-python-app.service || true
+
+        # Run the application in the background
+        sudo python3 Prediction.py &
+
+        # Sleep for a few seconds to ensure the process has started
+        sleep 5
 
         # Create systemd service (if needed)
         if [ ! -f /etc/systemd/system/my-python-app.service ]; then
