@@ -9,6 +9,7 @@ import os
 app = Flask(__name__)
 
 # Load your model (assuming the model file is present in the same directory)
+#test
 model = load_model('cat_vs_dog_classifier.h5')
 
 def load_and_preprocess_image(img_path, target_size=(150, 150)):
@@ -29,7 +30,7 @@ def cat_or_dog():
             temp_path = temp.name
 
 
-        img_array = load_and_preprocess_image(temp_path) 
+        img_array = load_and_preprocess_image(temp_path)
 
         prediction = model.predict(img_array)
 
