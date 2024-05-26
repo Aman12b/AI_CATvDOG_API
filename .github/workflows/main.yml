@@ -23,46 +23,48 @@ jobs:
         PROXMOX_HOST: ${{ secrets.PROXMOX_HOST }}
         SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
       run: |
-        # Debug: Check if sshpass is installed
-        sshpass -V
-        
-        # Debug: Verify SSH connection
-        sshpass -p "$SSH_PASSWORD" ssh -p 8022 -o StrictHostKeyChecking=no $PROXMOX_USER@$PROXMOX_HOST "echo 'SSH connection successful'"
-
         # Update and install necessary packages
-        sshpass -p "$SSH_PASSWORD" ssh -p 8022 -o StrictHostKeyChecking=no $PROXMOX_USER@$PROXMOX_HOST "sudo apt update && sudo apt install -y git python3 python3-pip"
-        
-        # Clone the repository
-        sshpass -p "$SSH_PASSWORD" ssh -p 8022 -o StrictHostKeyChecking=no $PROXMOX_USER@$PROXMOX_HOST "if [ ! -d /etc/AIAPI ]; then sudo git clone https://github.com/Aman12b/AI_CATvDOG_API.git /etc/AIAPI; else cd /etc/AIAPI && sudo git pull origin main; fi"
+        sudo apt update
+        sudo apt install -y git python3 python3-pip
 
-        # Debug: Check contents of /etc/AIAPI after cloning
-        sshpass -p "$SSH_PASSWORD" ssh -p 8022 -o StrictHostKeyChecking=no $PROXMOX_USER@$PROXMOX_HOST "ls -l /etc/AIAPI"
-        
+        # Clone the repository
+        if [ ! -d /etc/AIAPI ]; then
+          sudo git clone https://github.com/Aman12b/AI_CATvDOG_API.git /etc/AIAPI
+        else
+          cd /etc/AIAPI
+          sudo git pull origin main
+        fi
+
         # Navigate to the repository and install dependencies
-        sshpass -p "$SSH_PASSWORD" ssh -p 8022 -o StrictHostKeyChecking=no $PROXMOX_USER@$PROXMOX_HOST "cd /etc/AIAPI && sudo pip3 install -r requirement.txt"
-        
+        cd /etc/AIAPI
+        sudo pip3 install -r requirement.txt
+
         # Stop the existing service (if running)
-        sshpass -p "$SSH_PASSWORD" ssh -p 8022 -o StrictHostKeyChecking=no $PROXMOX_USER@$PROXMOX_HOST "sudo systemctl stop my-python-app.service || true"
+        sudo systemctl stop my-python-app.service || true
 
         # Run the application in the background
-        sshpass -p "$SSH_PASSWORD" ssh -p 8022 -o StrictHostKeyChecking=no $PROXMOX_USER@$PROXMOX_HOST "cd /etc/AIAPI && sudo python3 Prediction.py &"
-        
+        sudo python3 Prediction.py &
+
         # Sleep for a few seconds to ensure the process has started
-        sshpass -p "$SSH_PASSWORD" ssh -p 8022 -o StrictHostKeyChecking=no $PROXMOX_USER@$PROXMOX_HOST "sleep 5"
-        
+        sleep 5
+
         # Create systemd service (if needed)
-        sshpass -p "$SSH_PASSWORD" ssh -p 8022 -o StrictHostKeyChecking=no $PROXMOX_USER@$PROXMOX_HOST "if [ ! -f /etc/systemd/system/my-python-app.service ]; then echo '[Unit]
-        Description=My Python Application
-        After=network.target
+        if [ ! -f /etc/systemd/system/my-python-app.service ]; then
+          echo "[Unit]
+          Description=AIAPI
+          After=network.target
 
-        [Service]
-        User=$PROXMOX_USER
-        WorkingDirectory=/etc/AIAPI
-        ExecStart=/usr/bin/python3 /etc/AIAPI/Prediction.py
-        Restart=always
+          [Service]
+          User=$PROXMOX_USER
+          WorkingDirectory=/etc/AIAPI
+          ExecStart=/usr/bin/python3 /etc/AIAPI/Prediction.py
+          Restart=always
 
-        [Install]
-        WantedBy=multi-user.target' | sudo tee /etc/systemd/system/my-python-app.service && sudo systemctl enable my-python-app.service && sudo systemctl start my-python-app.service; else sudo systemctl restart my-python-app.service; fi"
-        
-        # Debug: Check status of the service
-        sshpass -p "$SSH_PASSWORD" ssh -p 8022 -o StrictHostKeyChecking=no $PROXMOX_USER@$PROXMOX_HOST "sudo systemctl status my-python-app.service"
+          [Install]
+          WantedBy=multi-user.target" | sudo tee /etc/systemd/system/my-python-app.service
+
+          sudo systemctl enable my-python-app.service
+          sudo systemctl start my-python-app.service
+        else
+          sudo systemctl restart my-python-app.service
+        fi
