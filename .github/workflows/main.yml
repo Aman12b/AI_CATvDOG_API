@@ -23,9 +23,12 @@ jobs:
         PROXMOX_HOST: ${{ secrets.PROXMOX_HOST }}
         SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
       run: |
-        # Debug: Check initial contents of /etc
-        sshpass -p "$SSH_PASSWORD" ssh -p 8022 -o StrictHostKeyChecking=no $PROXMOX_USER@$PROXMOX_HOST "ls -l /etc"
+        # Debug: Check if sshpass is installed
+        sshpass -V
         
+        # Debug: Verify SSH connection
+        sshpass -p "$SSH_PASSWORD" ssh -p 8022 -o StrictHostKeyChecking=no $PROXMOX_USER@$PROXMOX_HOST "echo 'SSH connection successful'"
+
         # Update and install necessary packages
         sshpass -p "$SSH_PASSWORD" ssh -p 8022 -o StrictHostKeyChecking=no $PROXMOX_USER@$PROXMOX_HOST "sudo apt update && sudo apt install -y git python3 python3-pip"
         
