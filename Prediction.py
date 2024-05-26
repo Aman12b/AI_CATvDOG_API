@@ -42,3 +42,4 @@ def cat_or_dog():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
+    # Run the app on all available interfaces
