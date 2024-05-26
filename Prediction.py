@@ -9,7 +9,6 @@ import os
 app = Flask(__name__)
 
 # Load your model (assuming the model file is present in the same directory)
-#test
 model = load_model('cat_vs_dog_classifier.h5')
 
 def load_and_preprocess_image(img_path, target_size=(150, 150)):
@@ -42,5 +41,4 @@ def cat_or_dog():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000) # to be accessible from outside the container
-
+    app.run(debug=True,host='0.0.0.0')
