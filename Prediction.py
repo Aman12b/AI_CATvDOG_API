@@ -29,7 +29,7 @@ def cat_or_dog():
             temp_path = temp.name
 
 
-        img_array = load_and_preprocess_image(temp_path)
+        img_array = load_and_preprocess_image(temp_path) 
 
         prediction = model.predict(img_array)
 
