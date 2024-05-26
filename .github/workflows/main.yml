@@ -14,10 +14,8 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Setup SSH
-      uses: webfactory/ssh-agent@v0.5.3
-      with:
-        ssh-private-key: ${{ secrets.PROXMOX_SSH_KEY }}
+    - name: Install sshpass
+      run: sudo apt-get install -y sshpass
 
     - name: Deploy to Proxmox
       env:
@@ -25,44 +23,42 @@ jobs:
         PROXMOX_HOST: ${{ secrets.PROXMOX_HOST }}
         SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
       run: |
-        sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no $PROXMOX_USER@$PROXMOX_HOST << 'EOF'
-          # Update and install necessary packages
-          sudo apt update
-          sudo apt install -y git python3 python3-pip
+        # Update and install necessary packages
+        sudo apt update
+        sudo apt install -y git python3 python3-pip
 
-          # Clone the repository
-          if [ ! -d /etc/AIAPI ]; then
-            sudo git clone https://github.com/Aman12b/AI_CATvDOG_API.git /etc/AIAPI
-          else
-            cd /etc/AIAPI
-            sudo git pull origin main
-          fi
-
-          # Navigate to the repository and install dependencies
+        # Clone the repository
+        if [ ! -d /etc/AIAPI ]; then
+          sudo git clone https://github.com/Aman12b/AI_CATvDOG_API.git /etc/AIAPI
+        else
           cd /etc/AIAPI
-          sudo pip3 install -r requirements.txt
+          sudo git pull origin main
+        fi
 
-          # Run the application
-          sudo python3 your_script.py
+        # Navigate to the repository and install dependencies
+        cd /etc/AIAPI
+        sudo pip3 install -r requirements.txt
 
-          # Create systemd service (if needed)
-          if [ ! -f /etc/systemd/system/my-python-app.service ]; then
-            echo "[Unit]
-            Description=My Python Application
-            After=network.target
+        # Run the application
+        sudo python3 your_script.py
 
-            [Service]
-            User=$PROXMOX_USER
-            WorkingDirectory=/etc/AIAPI
-            ExecStart=/usr/bin/python3 /etc/AIAPI/Prediction.py
-            Restart=always
+        # Create systemd service (if needed)
+        if [ ! -f /etc/systemd/system/my-python-app.service ]; then
+          echo "[Unit]
+          Description=My Python Application
+          After=network.target
 
-            [Install]
-            WantedBy=multi-user.target" | sudo tee /etc/systemd/system/my-python-app.service
+          [Service]
+          User=$PROXMOX_USER
+          WorkingDirectory=/etc/AIAPI
+          ExecStart=/usr/bin/python3 /etc/AIAPI/Prediction.py
+          Restart=always
 
-            sudo systemctl enable my-python-app.service
-            sudo systemctl start my-python-app.service
-          else
-            sudo systemctl restart my-python-app.service
-          fi
-        EOF
+          [Install]
+          WantedBy=multi-user.target" | sudo tee /etc/systemd/system/my-python-app.service
+
+          sudo systemctl enable my-python-app.service
+          sudo systemctl start my-python-app.service
+        else
+          sudo systemctl restart my-python-app.service
+        fi
