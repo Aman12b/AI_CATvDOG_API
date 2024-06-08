@@ -51,7 +51,7 @@ jobs:
         # Create systemd service (if needed)
         if [ ! -f /etc/systemd/system/my-python-app.service ]; then
           echo "[Unit]
-          Description=My Python Application
+          Description=AIAPI
           After=network.target
 
           [Service]
