@@ -31,9 +31,18 @@ jobs:
         # Ensure sshpass is installed (already installed in previous step)
         sudo apt-get install -y sshpass
 
+        # Define source directory
+        SOURCE_DIR="/path/to/your/source_directory"
+
+        # Check if source directory exists
+        if [ ! -d "$SOURCE_DIR" ]; then
+          echo "Error: Source directory '$SOURCE_DIR' not found."
+          exit 1
+        fi
+
         # SSH copy source data to Proxmox server
         echo "Copying source data to Proxmox server..."
-        sshpass -p $SSH_PASSWORD scp -o StrictHostKeyChecking=no -P 8022 -r source_directory/ $PROXMOX_USER@$PROXMOX_HOST:/etc/AIAPI
+        sshpass -p $SSH_PASSWORD scp -o StrictHostKeyChecking=no -P 8022 -r "$SOURCE_DIR/" "$PROXMOX_USER@$PROXMOX_HOST:/etc/AIAPI"
         echo "Source data copied successfully."
 
         # Navigate to the copied directory and install dependencies
@@ -46,10 +55,10 @@ jobs:
         sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p 8022 $PROXMOX_USER@$PROXMOX_HOST "sudo systemctl stop my-python-app.service || true"
         echo "Service stopped (if it was running)."
 
-        # Create systemd service (if needed)
+        # Create systemd service file (if needed)
         echo "Creating systemd service file (if needed)..."
-        sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p 8022 $PROXMOX_USER@$PROXMOX_HOST "if [ ! -f /etc/systemd/system/my-python-app.service ]; then
-          echo '[Unit]
+        sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p 8022 $PROXMOX_USER@$PROXMOX_HOST 'if [ ! -f /etc/systemd/system/my-python-app.service ]; then
+          echo "[Unit]
           Description=AIAPI
           After=network.target
 
@@ -60,13 +69,13 @@ jobs:
           Restart=always
 
           [Install]
-          WantedBy=multi-user.target' | sudo tee /etc/systemd/system/my-python-app.service
-          echo 'Systemd service file created.'
+          WantedBy=multi-user.target" | sudo tee /etc/systemd/system/my-python-app.service
+          echo "Systemd service file created."
 
-          echo 'Enabling systemd service...'
-          sudo systemctl enable my-python-app.service
-          echo 'Systemd service enabled.'
-        fi"
+          echo "Enabling systemd service..."
+          sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p 8022 $PROXMOX_USER@$PROXMOX_HOST "sudo systemctl enable my-python-app.service"
+          echo "Systemd service enabled."
+        fi
 
         # Start or restart the service
         echo "Starting or restarting the systemd service..."
