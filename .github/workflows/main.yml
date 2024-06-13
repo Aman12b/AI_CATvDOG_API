@@ -22,24 +22,23 @@ jobs:
       run: |
         echo "Starting deployment to Proxmox"
 
-        # Update and install necessary packages
-        echo "Updating package list and installing required packages..."
-        sudo apt update
-        sudo apt install -y python3 python3-pip
-        echo "Packages installed successfully."
+        # Update package list (without sudo)
+        echo "Updating package list..."
+        sudo apt-get update
 
-        # Ensure sshpass is installed (already installed in previous step)
-        sudo apt-get install -y sshpass
+        # Install necessary packages (without sudo)
+        echo "Installing required packages..."
+        sudo apt-get install -y python3 python3-pip sshpass
 
         # Create /etc/AIAPI directory if it doesn't exist
         sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p 8022 $PROXMOX_USER@$PROXMOX_HOST "sudo mkdir -p /etc/AIAPI"
 
-        # SSH copy source data to Proxmox server
+        # Copy source data to Proxmox server
         echo "Copying source data to Proxmox server..."
         sshpass -p $SSH_PASSWORD scp -o StrictHostKeyChecking=no -P 8022 -r /path/to/your/local/source_directory/. $PROXMOX_USER@$PROXMOX_HOST:/etc/AIAPI
         echo "Source data copied successfully."
 
-        # Navigate to the copied directory and install dependencies
+        # Install Python dependencies
         echo "Installing Python dependencies..."
         sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p 8022 $PROXMOX_USER@$PROXMOX_HOST "cd /etc/AIAPI && sudo pip3 install -r requirements.txt"
         echo "Python dependencies installed successfully."
