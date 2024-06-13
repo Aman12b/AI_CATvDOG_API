@@ -33,22 +33,22 @@ jobs:
 
         # SSH copy source data to Proxmox server
         echo "Copying source data to Proxmox server..."
-        sshpass -p $SSH_PASSWORD scp -o StrictHostKeyChecking=no -r source_directory/ $PROXMOX_USER@$PROXMOX_HOST:/etc/AIAPI
+        sshpass -p $SSH_PASSWORD scp -o StrictHostKeyChecking=no -P 8022 -r source_directory/ $PROXMOX_USER@$PROXMOX_HOST:/etc/AIAPI
         echo "Source data copied successfully."
 
         # Navigate to the copied directory and install dependencies
         echo "Installing Python dependencies..."
-        sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no $PROXMOX_USER@$PROXMOX_HOST "cd /etc/AIAPI && sudo pip3 install -r requirements.txt"
+        sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p 8022 $PROXMOX_USER@$PROXMOX_HOST "cd /etc/AIAPI && sudo pip3 install -r requirements.txt"
         echo "Python dependencies installed successfully."
 
         # Stop the existing service (if running)
         echo "Stopping existing service if running..."
-        sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no $PROXMOX_USER@$PROXMOX_HOST "sudo systemctl stop my-python-app.service || true"
+        sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p 8022 $PROXMOX_USER@$PROXMOX_HOST "sudo systemctl stop my-python-app.service || true"
         echo "Service stopped (if it was running)."
 
         # Create systemd service (if needed)
         echo "Creating systemd service file (if needed)..."
-        sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no $PROXMOX_USER@$PROXMOX_HOST "if [ ! -f /etc/systemd/system/my-python-app.service ]; then
+        sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p 8022 $PROXMOX_USER@$PROXMOX_HOST "if [ ! -f /etc/systemd/system/my-python-app.service ]; then
           echo '[Unit]
           Description=AIAPI
           After=network.target
@@ -70,7 +70,7 @@ jobs:
 
         # Start or restart the service
         echo "Starting or restarting the systemd service..."
-        sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no $PROXMOX_USER@$PROXMOX_HOST "sudo systemctl start my-python-app.service || sudo systemctl restart my-python-app.service"
+        sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p 8022 $PROXMOX_USER@$PROXMOX_HOST "sudo systemctl start my-python-app.service || sudo systemctl restart my-python-app.service"
         echo "Systemd service started or restarted successfully."
 
         echo "Deployment to Proxmox completed successfully."
