@@ -1,6 +1,7 @@
 tensorflow
 matplotlib
 flask
+flask_cors
 numpy
 pillow
 scipy
