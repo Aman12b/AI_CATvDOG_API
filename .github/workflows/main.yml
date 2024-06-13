@@ -22,6 +22,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Move files to /etc/AIAPI
+        run: |
+          mkdir -p /etc/AIAPI
+          cp -r . /etc/AIAPI
+
       - name: Stop existing process
         env:
           PROXMOX_HOST: ${{ secrets.PROXMOX_HOST }}
