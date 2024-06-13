@@ -18,8 +18,8 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PROXMOX_HOST }}
-          username: ${{ secrets.PROXMOX_USERNAME }}
-          password: ${{ secrets.PROXMOX_PASSWORD }}
+          username: ${{ secrets.PROXMOX_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
           port: 8022
           script: |
             cd /etc/AIAPI
