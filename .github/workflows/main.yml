@@ -1,4 +1,4 @@
-name: Deploy to Proxmox
+this user has no sudo rights "name: Deploy to Proxmox
 
 on:
   workflow_dispatch:
@@ -15,7 +15,7 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Install sshpass
-      run: apt-get install -y sshpass
+      run: sudo apt-get install -y sshpass
 
     - name: Deploy to Proxmox
       env:
@@ -27,31 +27,31 @@ jobs:
 
         # Update and install necessary packages
         echo "Updating package list and installing required packages..."
-        apt update
-        apt install -y git python3 python3-pip
+        sudo apt update
+        sudo apt install -y git python3 python3-pip
         echo "Packages installed successfully."
 
         # Clone the repository
         if [ ! -d /etc/AIAPI ]; then
           echo "Cloning repository to /etc/AIAPI..."
-          git clone https://github.com/Aman12b/AI_CATvDOG_API.git /etc/AIAPI
+          sudo git clone https://github.com/Aman12b/AI_CATvDOG_API.git /etc/AIAPI
           echo "Repository cloned successfully."
         else
           echo "Repository already exists. Pulling latest changes..."
           cd /etc/AIAPI
-          git pull origin main
+          sudo git pull origin main
           echo "Repository updated successfully."
         fi
 
         # Navigate to the repository and install dependencies
         echo "Installing Python dependencies..."
         cd /etc/AIAPI
-        pip3 install -r requirements.txt
+        sudo pip3 install -r requirements.txt
         echo "Python dependencies installed successfully."
 
         # Stop the existing service (if running)
         echo "Stopping existing service if running..."
-        systemctl stop my-python-app.service || true
+        sudo systemctl stop my-python-app.service || true
         echo "Service stopped (if it was running)."
 
         # Create systemd service (if needed)
@@ -68,17 +68,18 @@ jobs:
           Restart=always
 
           [Install]
-          WantedBy=multi-user.target" | tee /etc/systemd/system/my-python-app.service
+          WantedBy=multi-user.target" | sudo tee /etc/systemd/system/my-python-app.service
           echo "Systemd service file created."
 
           echo "Enabling systemd service..."
-          systemctl enable my-python-app.service
+          sudo systemctl enable my-python-app.service
           echo "Systemd service enabled."
         fi
 
         # Start or restart the service
         echo "Starting or restarting the systemd service..."
-        systemctl start my-python-app.service || systemctl restart my-python-app.service
+        sudo systemctl start my-python-app.service || sudo systemctl restart my-python-app.service
         echo "Systemd service started or restarted successfully."
 
         echo "Deployment to Proxmox completed successfully."
+"
