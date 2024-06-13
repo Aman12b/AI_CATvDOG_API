@@ -1,4 +1,4 @@
-this user has no sudo rights "name: Deploy to Proxmox
+name: Deploy to Proxmox
 
 on:
   workflow_dispatch:
