@@ -1,78 +1,45 @@
 name: Deploy to Proxmox
 
 on:
-  workflow_dispatch:
   push:
     branches:
-      - main  # Adjust if you want to deploy on a different branch
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Install sshpass
-      run: sudo apt-get install -y sshpass
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Deploy to Proxmox
-      env:
-        PROXMOX_USER: ${{ secrets.PROXMOX_USER }}
-        PROXMOX_HOST: ${{ secrets.PROXMOX_HOST }}
-        SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
-      run: |
-        echo "Starting deployment to Proxmox"
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
 
-        # Update package list (without sudo)
-        echo "Updating package list..."
-        sudo apt-get update
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-        # Install necessary packages (without sudo)
-        echo "Installing required packages..."
-        sudo apt-get install -y python3 python3-pip sshpass
+      - name: Stop existing process
+        env:
+          PROXMOX_HOST: ${{ secrets.PROXMOX_HOST }}
+          PROXMOX_USER: ${{ secrets.PROXMOX_USER }}
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          # Replace "Prediction.py" with your actual script name
+          # ssh user@your_proxmox_server -p 8022 "pkill -f Prediction.py"
 
-        # Create /etc/AIAPI directory if it doesn't exist
-        sshpass -p $SSH_PASSWORD ssh -t -o StrictHostKeyChecking=no -p 8022 $PROXMOX_USER@$PROXMOX_HOST "sudo mkdir -p /etc/AIAPI"
+      - name: Deploy to Proxmox
+        env:
+          PROXMOX_HOST: ${{ secrets.PROXMOX_HOST }}
+          PROXMOX_USER: ${{ secrets.PROXMOX_USER }}
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          # Replace "Prediction.py" with your actual script name
+          python Prediction.py
 
-        # Copy source data to Proxmox server
-        echo "Copying source data to Proxmox server..."
-        sshpass -p $SSH_PASSWORD scp -o StrictHostKeyChecking=no -P 8022 -r /path/to/your/local/source_directory/. $PROXMOX_USER@$PROXMOX_HOST:/etc/AIAPI
-        echo "Source data copied successfully."
-
-        # Install Python dependencies
-        echo "Installing Python dependencies..."
-        sshpass -p $SSH_PASSWORD ssh -t -o StrictHostKeyChecking=no -p 8022 $PROXMOX_USER@$PROXMOX_HOST "cd /etc/AIAPI && sudo pip3 install -r requirements.txt"
-        echo "Python dependencies installed successfully."
-
-        # Stop the existing service (if running)
-        echo "Stopping existing service if running..."
-        sshpass -p $SSH_PASSWORD ssh -t -o StrictHostKeyChecking=no -p 8022 $PROXMOX_USER@$PROXMOX_HOST "sudo systemctl stop my-python-app.service || true"
-        echo "Service stopped (if it was running)."
-
-        # Create systemd service file (if needed)
-        echo "Creating systemd service file (if needed)..."
-        sshpass -p $SSH_PASSWORD ssh -t -o StrictHostKeyChecking=no -p 8022 $PROXMOX_USER@$PROXMOX_HOST 'if [ ! -f /etc/systemd/system/my-python-app.service ]; then
-          echo "[Unit]
-          Description=AIAPI
-          After=network.target
-
-          [Service]
-          User=$PROXMOX_USER
-          WorkingDirectory=/etc/AIAPI
-          ExecStart=/usr/bin/python3 /etc/AIAPI/Prediction.py
-          Restart=always
-
-          [Install]
-          WantedBy=multi-user.target" | sudo tee /etc/systemd/system/my-python-app.service
-          echo "Systemd service file created."
-
-          echo "Enabling systemd service..."
-          sshpass -p $SSH_PASSWORD ssh -t -o StrictHostKeyChecking=no -p 8022 $PROXMOX_USER@$PROXMOX_HOST "sudo systemctl enable my-python-app.service"
-          echo "Systemd service enabled."
-        fi
-
-        # Start or restart the service
-        echo "Starting or restarting the systemd service..."
-        sshpass -p $SSH_PASSWORD ssh -t -o StrictHostKeyChecking=no -p 8022 $PROXMOX_USER@$PROXMOX_HOST "sudo systemctl start my-python-app.service || sudo systemctl restart my-python-app.service"
-        echo "Systemd service started or restarted successfully."
-
-        echo "Deployment to Proxmox completed successfully."
+      - name: Clean up
+        run: |
+          # Clean up any temporary files or artifacts
+          rm -rf __pycache__
