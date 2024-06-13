@@ -11,9 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
     - name: Install sshpass
       run: sudo apt-get install -y sshpass
 
@@ -28,36 +25,31 @@ jobs:
         # Update and install necessary packages
         echo "Updating package list and installing required packages..."
         sudo apt update
-        sudo apt install -y git python3 python3-pip
+        sudo apt install -y python3 python3-pip
         echo "Packages installed successfully."
 
-        # Clone the repository
-        if [ ! -d /etc/AIAPI ]; then
-          echo "Cloning repository to /etc/AIAPI..."
-          sudo git clone https://github.com/Aman12b/AI_CATvDOG_API.git /etc/AIAPI
-          echo "Repository cloned successfully."
-        else
-          echo "Repository already exists. Pulling latest changes..."
-          cd /etc/AIAPI
-          sudo git pull origin main
-          echo "Repository updated successfully."
-        fi
+        # Ensure sshpass is installed (already installed in previous step)
+        sudo apt-get install -y sshpass
 
-        # Navigate to the repository and install dependencies
+        # SSH copy source data to Proxmox server
+        echo "Copying source data to Proxmox server..."
+        sshpass -p $SSH_PASSWORD scp -o StrictHostKeyChecking=no -r source_directory/ $PROXMOX_USER@$PROXMOX_HOST:/etc/AIAPI
+        echo "Source data copied successfully."
+
+        # Navigate to the copied directory and install dependencies
         echo "Installing Python dependencies..."
-        cd /etc/AIAPI
-        sudo pip3 install -r requirements.txt
+        sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no $PROXMOX_USER@$PROXMOX_HOST "cd /etc/AIAPI && sudo pip3 install -r requirements.txt"
         echo "Python dependencies installed successfully."
 
         # Stop the existing service (if running)
         echo "Stopping existing service if running..."
-        sudo systemctl stop my-python-app.service || true
+        sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no $PROXMOX_USER@$PROXMOX_HOST "sudo systemctl stop my-python-app.service || true"
         echo "Service stopped (if it was running)."
 
         # Create systemd service (if needed)
-        if [ ! -f /etc/systemd/system/my-python-app.service ]; then
-          echo "Creating systemd service file..."
-          echo "[Unit]
+        echo "Creating systemd service file (if needed)..."
+        sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no $PROXMOX_USER@$PROXMOX_HOST "if [ ! -f /etc/systemd/system/my-python-app.service ]; then
+          echo '[Unit]
           Description=AIAPI
           After=network.target
 
@@ -68,17 +60,17 @@ jobs:
           Restart=always
 
           [Install]
-          WantedBy=multi-user.target" | sudo tee /etc/systemd/system/my-python-app.service
-          echo "Systemd service file created."
+          WantedBy=multi-user.target' | sudo tee /etc/systemd/system/my-python-app.service
+          echo 'Systemd service file created.'
 
-          echo "Enabling systemd service..."
+          echo 'Enabling systemd service...'
           sudo systemctl enable my-python-app.service
-          echo "Systemd service enabled."
-        fi
+          echo 'Systemd service enabled.'
+        fi"
 
         # Start or restart the service
         echo "Starting or restarting the systemd service..."
-        sudo systemctl start my-python-app.service || sudo systemctl restart my-python-app.service
+        sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no $PROXMOX_USER@$PROXMOX_HOST "sudo systemctl start my-python-app.service || sudo systemctl restart my-python-app.service"
         echo "Systemd service started or restarted successfully."
 
         echo "Deployment to Proxmox completed successfully."
