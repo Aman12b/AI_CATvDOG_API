@@ -3,10 +3,12 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 import numpy as np
 from flask import Flask, request, jsonify
+from flask_cors import CORS  # Import CORS
 import tempfile
 import os
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 # Load your model (assuming the model file is present in the same directory)
 model = load_model('cat_vs_dog_classifier.h5')
@@ -21,13 +23,11 @@ def load_and_preprocess_image(img_path, target_size=(150, 150)):
 @app.route('/catordog', methods=['POST'])
 def cat_or_dog():
     try:
-
         img_file = request.files['file']
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp:
             img_file.save(temp.name)
             temp_path = temp.name
-
 
         img_array = load_and_preprocess_image(temp_path)
 
