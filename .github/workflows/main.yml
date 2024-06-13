@@ -31,18 +31,12 @@ jobs:
         # Ensure sshpass is installed (already installed in previous step)
         sudo apt-get install -y sshpass
 
-        # Define source directory
-        SOURCE_DIR="/path/to/your/source_directory"
-
-        # Check if source directory exists
-        if [ ! -d "$SOURCE_DIR" ]; then
-          echo "Error: Source directory '$SOURCE_DIR' not found."
-          exit 1
-        fi
+        # Create /etc/AIAPI directory if it doesn't exist
+        sshpass -p $SSH_PASSWORD ssh -o StrictHostKeyChecking=no -p 8022 $PROXMOX_USER@$PROXMOX_HOST "sudo mkdir -p /etc/AIAPI"
 
         # SSH copy source data to Proxmox server
         echo "Copying source data to Proxmox server..."
-        sshpass -p $SSH_PASSWORD scp -o StrictHostKeyChecking=no -P 8022 -r "$SOURCE_DIR/" "$PROXMOX_USER@$PROXMOX_HOST:/etc/AIAPI"
+        sshpass -p $SSH_PASSWORD scp -o StrictHostKeyChecking=no -P 8022 -r /path/to/your/local/source_directory/. $PROXMOX_USER@$PROXMOX_HOST:/etc/AIAPI
         echo "Source data copied successfully."
 
         # Navigate to the copied directory and install dependencies
