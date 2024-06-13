@@ -23,4 +23,4 @@ jobs:
           port: 8022
           script: |
             cd /etc/AIAPI
-            nohup python3 deployment.py &
+            nohup python3 deployment.py > deployment.log 2>&1 &
