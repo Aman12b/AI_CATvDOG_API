@@ -1,51 +1,25 @@
-name: Deploy to Proxmox
+name: Run Deployment on Proxmox
 
 on:
-  workflow_dispatch:
   push:
     branches:
-      - main
+      - main  # Adjust the branch name as needed
 
 jobs:
-  deploy:
+  run-deployment:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
+      - name: SSH into Proxmox
+        uses: appleboy/ssh-action@master
         with:
-          python-version: '3.x'
-
-      #- name: Install dependencies
-      #  run: pip install -r requirements.txt
-
-      - name: Move files to /etc/AIAPI
-        run: |
-          mkdir -p /etc/AIAPI
-          cp -r . /etc/AIAPI
-
-      - name: Stop existing process
-        env:
-          PROXMOX_HOST: ${{ secrets.PROXMOX_HOST }}
-          PROXMOX_USER: ${{ secrets.PROXMOX_USER }}
-          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
-        run: |
-          # Replace "Prediction.py" with your actual script name
-          # ssh user@your_proxmox_server -p 8022 "pkill -f Prediction.py"
-
-      - name: Deploy to Proxmox
-        env:
-          PROXMOX_HOST: ${{ secrets.PROXMOX_HOST }}
-          PROXMOX_USER: ${{ secrets.PROXMOX_USER }}
-          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
-        run: |
-          # Replace "Prediction.py" with your actual script name
-          python Prediction.py
-
-      - name: Clean up
-        run: |
-          # Clean up any temporary files or artifacts
-          rm -rf __pycache__
+          host: ${{ secrets.PROXMOX_HOST }}
+          username: ${{ secrets.PROXMOX_USERNAME }}
+          password: ${{ secrets.PROXMOX_PASSWORD }}
+          port: 8022
+          script: |
+            cd /etc/AIAPI
+            python3 deployment.py
