@@ -1,6 +1,7 @@
 name: Run Deployment on Proxmox
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main  # Adjust the branch name as needed
